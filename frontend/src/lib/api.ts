@@ -93,4 +93,6 @@ export const api = {
 
   deleteProspect: (token: string, id: string) =>
     request<void>(`/prospects/${id}`, { method: "DELETE" }, token),
+
+  listClients: (token: string) => request<ClientOut[]>("/clients", {}, token),
 };
