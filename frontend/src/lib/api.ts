@@ -2,6 +2,11 @@ import type {
   ClientCreateInput,
   ClientOut,
   ClientUpdateInput,
+  InvoiceCreateInput,
+  InvoiceDetailOut,
+  InvoiceOut,
+  InvoiceStatus,
+  InvoiceUpdateInput,
   LoginInput,
   OrganizationOut,
   ProjectCreateInput,
@@ -13,6 +18,11 @@ import type {
   ProspectOut,
   ProspectStatus,
   ProspectUpdateInput,
+  QuoteCreateInput,
+  QuoteDetailOut,
+  QuoteOut,
+  QuoteStatus,
+  QuoteUpdateInput,
   RegisterInput,
   TaskCreateInput,
   TaskOut,
@@ -140,4 +150,42 @@ export const api = {
     request<void>(`/tasks/${taskId}`, { method: "DELETE" }, token),
 
   listIncompleteTasks: (token: string) => request<TaskWithProjectOut[]>("/tasks", {}, token),
+
+  listQuotes: (token: string, status?: QuoteStatus) =>
+    request<QuoteOut[]>(`/quotes${status ? `?status_filter=${status}` : ""}`, {}, token),
+
+  createQuote: (token: string, data: QuoteCreateInput) =>
+    request<QuoteOut>("/quotes", { method: "POST", body: JSON.stringify(data) }, token),
+
+  getQuote: (token: string, id: string) => request<QuoteDetailOut>(`/quotes/${id}`, {}, token),
+
+  updateQuote: (token: string, id: string, data: QuoteUpdateInput) =>
+    request<QuoteDetailOut>(`/quotes/${id}`, { method: "PATCH", body: JSON.stringify(data) }, token),
+
+  transitionQuote: (token: string, id: string, status: QuoteStatus) =>
+    request<QuoteOut>(`/quotes/${id}/transition`, { method: "POST", body: JSON.stringify({ status }) }, token),
+
+  convertQuoteToInvoice: (token: string, id: string) =>
+    request<InvoiceOut>(`/quotes/${id}/convert-to-invoice`, { method: "POST" }, token),
+
+  deleteQuote: (token: string, id: string) => request<void>(`/quotes/${id}`, { method: "DELETE" }, token),
+
+  listInvoices: (token: string, status?: InvoiceStatus) =>
+    request<InvoiceOut[]>(`/invoices${status ? `?status_filter=${status}` : ""}`, {}, token),
+
+  createInvoice: (token: string, data: InvoiceCreateInput) =>
+    request<InvoiceOut>("/invoices", { method: "POST", body: JSON.stringify(data) }, token),
+
+  getInvoice: (token: string, id: string) => request<InvoiceDetailOut>(`/invoices/${id}`, {}, token),
+
+  updateInvoice: (token: string, id: string, data: InvoiceUpdateInput) =>
+    request<InvoiceDetailOut>(`/invoices/${id}`, { method: "PATCH", body: JSON.stringify(data) }, token),
+
+  transitionInvoice: (token: string, id: string, status: InvoiceStatus) =>
+    request<InvoiceOut>(`/invoices/${id}/transition`, { method: "POST", body: JSON.stringify({ status }) }, token),
+
+  markInvoicePaid: (token: string, id: string) =>
+    request<InvoiceOut>(`/invoices/${id}/mark-paid`, { method: "POST" }, token),
+
+  deleteInvoice: (token: string, id: string) => request<void>(`/invoices/${id}`, { method: "DELETE" }, token),
 };

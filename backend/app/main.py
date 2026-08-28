@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, clients, organizations, projects, prospects, users
+from app.api import auth, clients, invoices, organizations, projects, prospects, quotes, users
 from app.core.config import settings
 
 # Sans ceci, le logger racine reste au niveau WARNING par défaut et les
@@ -39,3 +39,5 @@ app.include_router(organizations.router)
 app.include_router(prospects.router)
 app.include_router(clients.router)
 app.include_router(projects.router)
+app.include_router(quotes.router)
+app.include_router(invoices.router)

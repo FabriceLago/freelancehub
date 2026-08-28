@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { buildActivityFeed } from "@/lib/activity";
+import { formatCents } from "@/lib/money";
 import { getStoredToken, useAuth } from "@/lib/auth-context";
-import type { ClientOut, OrganizationOut, ProjectOut, ProspectOut, TaskWithProjectOut } from "@/lib/types";
+import type { ClientOut, InvoiceOut, OrganizationOut, ProjectOut, ProspectOut, TaskWithProjectOut } from "@/lib/types";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { EmptyWidget } from "@/components/dashboard/EmptyWidget";
@@ -21,6 +22,7 @@ export default function DashboardPage() {
   const [clients, setClients] = useState<ClientOut[] | null>(null);
   const [projects, setProjects] = useState<ProjectOut[] | null>(null);
   const [tasks, setTasks] = useState<TaskWithProjectOut[] | null>(null);
+  const [invoices, setInvoices] = useState<InvoiceOut[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,13 +34,15 @@ export default function DashboardPage() {
       api.listClients(token),
       api.listProjects(token),
       api.listIncompleteTasks(token),
+      api.listInvoices(token),
     ])
-      .then(([orgData, prospectList, clientList, projectList, taskList]) => {
+      .then(([orgData, prospectList, clientList, projectList, taskList, invoiceList]) => {
         setOrg(orgData);
         setProspects(prospectList);
         setClients(clientList);
         setProjects(projectList);
         setTasks(taskList);
+        setInvoices(invoiceList);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -46,6 +50,10 @@ export default function DashboardPage() {
   const activeProspects = prospects?.filter((p) => p.status === "contacted" || p.status === "discussing").length;
   const activeProjects = projects?.filter((p) => p.status === "active").length;
   const activity = prospects && clients ? buildActivityFeed(prospects, clients) : [];
+
+  const unpaidInvoices = invoices?.filter((inv) => inv.status === "sent" || inv.status === "overdue") ?? [];
+  const unpaidCents = unpaidInvoices.reduce((sum, inv) => sum + inv.balance_cents, 0);
+  const paidCents = invoices?.reduce((sum, inv) => sum + inv.paid_cents, 0) ?? 0;
 
   return (
     <div className="flex flex-col gap-7">
@@ -74,7 +82,12 @@ export default function DashboardPage() {
           value={activeProjects !== undefined ? String(activeProjects) : "…"}
           href="/dashboard/projects"
         />
-        <KpiCard label="Factures impayées" value="—" note="Bientôt disponible" />
+        <KpiCard
+          label="Factures impayées"
+          value={invoices !== null ? formatCents(unpaidCents) : "…"}
+          note={invoices !== null ? `${unpaidInvoices.length} facture(s)` : undefined}
+          href="/dashboard/invoices"
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.6fr_1fr]">
@@ -99,7 +112,22 @@ export default function DashboardPage() {
 
       <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface-2)] p-6">
         <h2 className="mb-3 text-sm font-semibold">Revenus</h2>
-        <EmptyWidget message="Le suivi du chiffre d'affaires arrive avec les devis et factures." />
+        {loading ? (
+          <p className="text-sm text-[var(--color-text-dim)]">Chargement...</p>
+        ) : invoices && invoices.length > 0 ? (
+          <div className="flex gap-8">
+            <div>
+              <div className="text-xs text-[var(--color-text-dim)]">Encaissé</div>
+              <div className="font-data mt-1 text-xl text-[var(--color-ok)]">{formatCents(paidCents)}</div>
+            </div>
+            <div>
+              <div className="text-xs text-[var(--color-text-dim)]">En attente</div>
+              <div className="font-data mt-1 text-xl">{formatCents(unpaidCents)}</div>
+            </div>
+          </div>
+        ) : (
+          <EmptyWidget message="Le suivi du chiffre d'affaires apparaîtra dès votre première facture." />
+        )}
       </div>
     </div>
   );

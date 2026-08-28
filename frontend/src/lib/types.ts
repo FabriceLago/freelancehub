@@ -132,3 +132,105 @@ export type TaskWithProjectOut = TaskOut & {
   project_id: string;
   project_name: string;
 };
+
+// tax_rate et quantity sont des Decimal côté backend — Pydantic les sérialise
+// en chaînes (pas des number JS) pour ne jamais perdre de précision.
+export type QuoteStatus = "draft" | "sent" | "accepted" | "declined" | "expired";
+export type InvoiceStatus = "draft" | "sent" | "paid" | "overdue" | "cancelled";
+
+export type LineItemInput = {
+  description: string;
+  quantity?: string;
+  unit_price_cents: number;
+};
+
+export type LineItemOut = {
+  id: string;
+  description: string;
+  quantity: string;
+  unit_price_cents: number;
+  position: number;
+};
+
+export type QuoteOut = {
+  id: string;
+  number: string;
+  status: QuoteStatus;
+  currency: string;
+  client_id: string;
+  project_id: string | null;
+  subtotal_cents: number;
+  tax_rate: string;
+  total_cents: number;
+  valid_until: string | null;
+  sent_at: string | null;
+  accepted_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type QuoteDetailOut = QuoteOut & {
+  line_items: LineItemOut[];
+};
+
+export type QuoteCreateInput = {
+  client_id: string;
+  project_id?: string;
+  tax_rate?: string;
+  valid_until?: string;
+  line_items: LineItemInput[];
+};
+
+export type QuoteUpdateInput = {
+  project_id?: string;
+  tax_rate?: string;
+  valid_until?: string;
+  line_items?: LineItemInput[];
+};
+
+export type PaymentOut = {
+  id: string;
+  amount_cents: number;
+  method: string;
+  paid_at: string;
+};
+
+export type InvoiceOut = {
+  id: string;
+  number: string;
+  status: InvoiceStatus;
+  currency: string;
+  client_id: string;
+  project_id: string | null;
+  quote_id: string | null;
+  subtotal_cents: number;
+  tax_rate: string;
+  total_cents: number;
+  paid_cents: number;
+  balance_cents: number;
+  due_date: string | null;
+  sent_at: string | null;
+  paid_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type InvoiceDetailOut = InvoiceOut & {
+  line_items: LineItemOut[];
+  payments: PaymentOut[];
+};
+
+export type InvoiceCreateInput = {
+  client_id: string;
+  project_id?: string;
+  tax_rate?: string;
+  due_date?: string;
+  line_items: LineItemInput[];
+};
+
+export type InvoiceUpdateInput = {
+  project_id?: string;
+  tax_rate?: string;
+  due_date?: string;
+  line_items?: LineItemInput[];
+};

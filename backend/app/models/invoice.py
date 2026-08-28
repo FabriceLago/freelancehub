@@ -45,6 +45,14 @@ class Invoice(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     line_items: Mapped[list["InvoiceLineItem"]] = relationship(back_populates="invoice", cascade="all, delete-orphan")
     payments: Mapped[list["Payment"]] = relationship(back_populates="invoice", cascade="all, delete-orphan")
 
+    @property
+    def paid_cents(self) -> int:
+        return sum(p.amount_cents for p in self.payments)
+
+    @property
+    def balance_cents(self) -> int:
+        return self.total_cents - self.paid_cents
+
 
 class InvoiceLineItem(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "invoice_line_items"
