@@ -32,3 +32,40 @@ export type LoginInput = {
   email: string;
   password: string;
 };
+
+export type ProspectStatus = "contacted" | "discussing" | "converted" | "lost";
+
+export type ProspectOut = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  status: ProspectStatus;
+  source: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProspectCreateInput = {
+  name: string;
+  email?: string;
+  phone?: string;
+  source?: string;
+  notes?: string;
+};
+
+export type ProspectUpdateInput = Partial<ProspectCreateInput> & {
+  status?: ProspectStatus;
+};
+
+export type ClientOut = {
+  id: string;
+  name: string;
+  company: string | null;
+  email: string | null;
+  phone: string | null;
+  converted_from_prospect_id: string | null;
+  created_at: string;
+  updated_at: string;
+};

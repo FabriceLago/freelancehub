@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, organizations, users
+from app.api import auth, organizations, prospects, users
 from app.core.config import settings
 
 # Sans ceci, le logger racine reste au niveau WARNING par défaut et les
@@ -36,3 +36,4 @@ def health():
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(organizations.router)
+app.include_router(prospects.router)

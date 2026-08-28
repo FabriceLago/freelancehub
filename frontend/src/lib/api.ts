@@ -1,6 +1,11 @@
 import type {
+  ClientOut,
   LoginInput,
   OrganizationOut,
+  ProspectCreateInput,
+  ProspectOut,
+  ProspectStatus,
+  ProspectUpdateInput,
   RegisterInput,
   TokenResponse,
   UserOut,
@@ -73,4 +78,19 @@ export const api = {
   me: (token: string) => request<UserOut>("/users/me", {}, token),
 
   myOrganization: (token: string) => request<OrganizationOut>("/organizations/me", {}, token),
+
+  listProspects: (token: string, status?: ProspectStatus) =>
+    request<ProspectOut[]>(`/prospects${status ? `?status_filter=${status}` : ""}`, {}, token),
+
+  createProspect: (token: string, data: ProspectCreateInput) =>
+    request<ProspectOut>("/prospects", { method: "POST", body: JSON.stringify(data) }, token),
+
+  updateProspect: (token: string, id: string, data: ProspectUpdateInput) =>
+    request<ProspectOut>(`/prospects/${id}`, { method: "PATCH", body: JSON.stringify(data) }, token),
+
+  convertProspect: (token: string, id: string) =>
+    request<ClientOut>(`/prospects/${id}/convert`, { method: "POST" }, token),
+
+  deleteProspect: (token: string, id: string) =>
+    request<void>(`/prospects/${id}`, { method: "DELETE" }, token),
 };
