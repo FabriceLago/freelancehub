@@ -69,3 +69,12 @@ export type ClientOut = {
   created_at: string;
   updated_at: string;
 };
+
+export type ClientCreateInput = {
+  name: string;
+  company?: string;
+  email?: string;
+  phone?: string;
+};
+
+export type ClientUpdateInput = Partial<ClientCreateInput>;

@@ -1,5 +1,7 @@
 import type {
+  ClientCreateInput,
   ClientOut,
+  ClientUpdateInput,
   LoginInput,
   OrganizationOut,
   ProspectCreateInput,
@@ -95,4 +97,13 @@ export const api = {
     request<void>(`/prospects/${id}`, { method: "DELETE" }, token),
 
   listClients: (token: string) => request<ClientOut[]>("/clients", {}, token),
+
+  createClient: (token: string, data: ClientCreateInput) =>
+    request<ClientOut>("/clients", { method: "POST", body: JSON.stringify(data) }, token),
+
+  updateClient: (token: string, id: string, data: ClientUpdateInput) =>
+    request<ClientOut>(`/clients/${id}`, { method: "PATCH", body: JSON.stringify(data) }, token),
+
+  deleteClient: (token: string, id: string) =>
+    request<void>(`/clients/${id}`, { method: "DELETE" }, token),
 };
