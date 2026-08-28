@@ -2,11 +2,11 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String
+from sqlalchemy import DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
+from app.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin, str_enum
 
 
 class PlanCode(str, enum.Enum):
@@ -31,7 +31,7 @@ class Plan(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     __tablename__ = "plans"
 
-    code: Mapped[PlanCode] = mapped_column(Enum(PlanCode, native_enum=False, length=20), unique=True, nullable=False)
+    code: Mapped[PlanCode] = mapped_column(str_enum(PlanCode, 20), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     price_cents: Mapped[int] = mapped_column(Integer, nullable=False)
     max_prospects: Mapped[int | None] = mapped_column(Integer, nullable=True)  # None = illimité
@@ -48,7 +48,7 @@ class Subscription(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     plan_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("plans.id", ondelete="RESTRICT"))
     status: Mapped[SubscriptionStatus] = mapped_column(
-        Enum(SubscriptionStatus, native_enum=False, length=20), default=SubscriptionStatus.TRIALING
+        str_enum(SubscriptionStatus, 20), default=SubscriptionStatus.TRIALING
     )
     stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     stripe_subscription_id: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True)

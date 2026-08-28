@@ -1,8 +1,18 @@
+import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Uuid, func
+from sqlalchemy import DateTime, Enum, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column
+
+
+def str_enum(enum_cls: type[enum.Enum], length: int) -> Enum:
+    """Enum(native_enum=False) stocke le NOM du membre ('FREE') par défaut,
+    pas sa valeur ('free') — piège classique de SQLAlchemy. Comme nos enums
+    sont des `str, Enum` dont la valeur EST la forme qu'on veut en base
+    (lisible, stable si on renomme un membre Python), on force values_callable
+    à utiliser .value partout plutôt que de le refaire à la main 8 fois."""
+    return Enum(enum_cls, native_enum=False, length=length, values_callable=lambda x: [e.value for e in x])
 
 
 class UUIDPrimaryKeyMixin:

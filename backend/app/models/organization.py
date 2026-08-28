@@ -1,11 +1,11 @@
 import enum
 import uuid
 
-from sqlalchemy import Enum, ForeignKey, String, UniqueConstraint
+from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
+from app.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin, str_enum
 
 
 class Role(str, enum.Enum):
@@ -43,7 +43,7 @@ class Membership(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     organization_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("organizations.id", ondelete="CASCADE"), index=True
     )
-    role: Mapped[Role] = mapped_column(Enum(Role, native_enum=False, length=20), default=Role.OWNER, nullable=False)
+    role: Mapped[Role] = mapped_column(str_enum(Role, 20), default=Role.OWNER, nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="memberships")
     organization: Mapped["Organization"] = relationship(back_populates="memberships")

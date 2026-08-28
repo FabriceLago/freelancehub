@@ -2,11 +2,11 @@ import enum
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
+from app.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin, str_enum
 
 
 class InvoiceStatus(str, enum.Enum):
@@ -30,7 +30,7 @@ class Invoice(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     number: Mapped[str] = mapped_column(String(50), nullable=False)
     status: Mapped[InvoiceStatus] = mapped_column(
-        Enum(InvoiceStatus, native_enum=False, length=20), default=InvoiceStatus.DRAFT, nullable=False
+        str_enum(InvoiceStatus, 20), default=InvoiceStatus.DRAFT, nullable=False
     )
     currency: Mapped[str] = mapped_column(String(3), default="EUR", nullable=False)
     subtotal_cents: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

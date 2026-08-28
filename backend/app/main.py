@@ -1,7 +1,14 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api import auth, users
 from app.core.config import settings
+
+# Sans ceci, le logger racine reste au niveau WARNING par défaut et les
+# logger.info() applicatifs (ex: le stub d'email) sont silencieusement ignorés.
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="FreelanceHub API", version="0.1.0")
 
@@ -24,3 +31,7 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "healthy"}
+
+
+app.include_router(auth.router)
+app.include_router(users.router)
