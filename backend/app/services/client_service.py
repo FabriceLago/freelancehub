@@ -1,5 +1,6 @@
 import uuid
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AppError
@@ -9,6 +10,10 @@ from app.schemas.client import ClientCreate, ClientUpdate
 
 
 class ClientNotFoundError(AppError):
+    pass
+
+
+class ClientHasProjectsError(AppError):
     pass
 
 
@@ -45,4 +50,12 @@ def update_client(db: Session, organization_id: uuid.UUID, client_id: uuid.UUID,
 def delete_client(db: Session, organization_id: uuid.UUID, client_id: uuid.UUID) -> None:
     client = get_client(db, organization_id, client_id)
     db.delete(client)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # projects.client_id est ON DELETE RESTRICT (Étape 3) : protège les
+        # projets/devis/factures existants d'une suppression silencieuse.
+        # On traduit la violation de contrainte en erreur métier lisible
+        # plutôt que de laisser fuiter un 500 avec la trace SQL brute.
+        db.rollback()
+        raise ClientHasProjectsError()

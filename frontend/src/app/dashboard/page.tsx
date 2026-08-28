@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { buildActivityFeed } from "@/lib/activity";
 import { getStoredToken, useAuth } from "@/lib/auth-context";
-import type { ClientOut, OrganizationOut, ProspectOut } from "@/lib/types";
+import type { ClientOut, OrganizationOut, ProjectOut, ProspectOut, TaskWithProjectOut } from "@/lib/types";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { EmptyWidget } from "@/components/dashboard/EmptyWidget";
 import { NotificationBanner } from "@/components/dashboard/NotificationBanner";
+import { TaskWidget } from "@/components/dashboard/TaskWidget";
 
 const ROLE_LABELS: Record<string, string> = { owner: "Propriétaire", admin: "Admin", member: "Membre" };
 const PLAN_LABELS: Record<string, string> = { free: "Free", starter: "Starter", pro: "Pro", business: "Business" };
@@ -18,21 +19,32 @@ export default function DashboardPage() {
   const [org, setOrg] = useState<OrganizationOut | null>(null);
   const [prospects, setProspects] = useState<ProspectOut[] | null>(null);
   const [clients, setClients] = useState<ClientOut[] | null>(null);
+  const [projects, setProjects] = useState<ProjectOut[] | null>(null);
+  const [tasks, setTasks] = useState<TaskWithProjectOut[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = getStoredToken();
     if (!token) return;
-    Promise.all([api.myOrganization(token), api.listProspects(token), api.listClients(token)])
-      .then(([orgData, prospectList, clientList]) => {
+    Promise.all([
+      api.myOrganization(token),
+      api.listProspects(token),
+      api.listClients(token),
+      api.listProjects(token),
+      api.listIncompleteTasks(token),
+    ])
+      .then(([orgData, prospectList, clientList, projectList, taskList]) => {
         setOrg(orgData);
         setProspects(prospectList);
         setClients(clientList);
+        setProjects(projectList);
+        setTasks(taskList);
       })
       .finally(() => setLoading(false));
   }, []);
 
   const activeProspects = prospects?.filter((p) => p.status === "contacted" || p.status === "discussing").length;
+  const activeProjects = projects?.filter((p) => p.status === "active").length;
   const activity = prospects && clients ? buildActivityFeed(prospects, clients) : [];
 
   return (
@@ -56,12 +68,12 @@ export default function DashboardPage() {
           value={activeProspects !== undefined ? String(activeProspects) : "…"}
           href="/dashboard/prospects"
         />
+        <KpiCard label="Clients" value={clients !== null ? String(clients.length) : "…"} href="/dashboard/clients" />
         <KpiCard
-          label="Clients"
-          value={clients !== null ? String(clients.length) : "…"}
-          href="/dashboard/clients"
+          label="Projets en cours"
+          value={activeProjects !== undefined ? String(activeProjects) : "…"}
+          href="/dashboard/projects"
         />
-        <KpiCard label="Projets en cours" value="—" note="Bientôt disponible" />
         <KpiCard label="Factures impayées" value="—" note="Bientôt disponible" />
       </div>
 
@@ -77,7 +89,11 @@ export default function DashboardPage() {
 
         <div className="rounded-lg border border-[var(--color-line)] bg-[var(--color-surface-2)] p-6">
           <h2 className="mb-3 text-sm font-semibold">Tâches</h2>
-          <EmptyWidget message="La gestion des tâches arrive avec les projets." />
+          {loading ? (
+            <p className="text-sm text-[var(--color-text-dim)]">Chargement...</p>
+          ) : (
+            <TaskWidget tasks={tasks ?? []} />
+          )}
         </div>
       </div>
 

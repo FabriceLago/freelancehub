@@ -21,8 +21,8 @@ export function buildActivityFeed(prospects: ProspectOut[], clients: ClientOut[]
     })),
     ...clients.map((c) => ({
       id: `client-${c.id}`,
-      label: `Converti en client — ${c.name}`,
-      meta: "Prospect converti",
+      label: c.converted_from_prospect_id ? `Converti en client — ${c.name}` : `Nouveau client — ${c.name}`,
+      meta: c.converted_from_prospect_id ? "Prospect converti" : "Ajouté directement",
       timestamp: c.created_at,
     })),
   ];

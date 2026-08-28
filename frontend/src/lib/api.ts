@@ -4,11 +4,20 @@ import type {
   ClientUpdateInput,
   LoginInput,
   OrganizationOut,
+  ProjectCreateInput,
+  ProjectDetailOut,
+  ProjectOut,
+  ProjectStatus,
+  ProjectUpdateInput,
   ProspectCreateInput,
   ProspectOut,
   ProspectStatus,
   ProspectUpdateInput,
   RegisterInput,
+  TaskCreateInput,
+  TaskOut,
+  TaskUpdateInput,
+  TaskWithProjectOut,
   TokenResponse,
   UserOut,
 } from "./types";
@@ -106,4 +115,29 @@ export const api = {
 
   deleteClient: (token: string, id: string) =>
     request<void>(`/clients/${id}`, { method: "DELETE" }, token),
+
+  listProjects: (token: string, status?: ProjectStatus) =>
+    request<ProjectOut[]>(`/projects${status ? `?status_filter=${status}` : ""}`, {}, token),
+
+  createProject: (token: string, data: ProjectCreateInput) =>
+    request<ProjectOut>("/projects", { method: "POST", body: JSON.stringify(data) }, token),
+
+  getProject: (token: string, id: string) => request<ProjectDetailOut>(`/projects/${id}`, {}, token),
+
+  updateProject: (token: string, id: string, data: ProjectUpdateInput) =>
+    request<ProjectOut>(`/projects/${id}`, { method: "PATCH", body: JSON.stringify(data) }, token),
+
+  deleteProject: (token: string, id: string) =>
+    request<void>(`/projects/${id}`, { method: "DELETE" }, token),
+
+  createTask: (token: string, projectId: string, data: TaskCreateInput) =>
+    request<TaskOut>(`/projects/${projectId}/tasks`, { method: "POST", body: JSON.stringify(data) }, token),
+
+  updateTask: (token: string, taskId: string, data: TaskUpdateInput) =>
+    request<TaskOut>(`/tasks/${taskId}`, { method: "PATCH", body: JSON.stringify(data) }, token),
+
+  deleteTask: (token: string, taskId: string) =>
+    request<void>(`/tasks/${taskId}`, { method: "DELETE" }, token),
+
+  listIncompleteTasks: (token: string) => request<TaskWithProjectOut[]>("/tasks", {}, token),
 };

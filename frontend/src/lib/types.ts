@@ -78,3 +78,57 @@ export type ClientCreateInput = {
 };
 
 export type ClientUpdateInput = Partial<ClientCreateInput>;
+
+export type ProjectStatus = "active" | "completed" | "archived";
+
+export type ProjectOut = {
+  id: string;
+  client_id: string;
+  name: string;
+  description: string | null;
+  status: ProjectStatus;
+  start_date: string | null;
+  due_date: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TaskOut = {
+  id: string;
+  title: string;
+  is_done: boolean;
+  due_date: string | null;
+  created_at: string;
+};
+
+export type ProjectDetailOut = ProjectOut & {
+  tasks: TaskOut[];
+};
+
+export type ProjectCreateInput = {
+  client_id: string;
+  name: string;
+  description?: string;
+  start_date?: string;
+  due_date?: string;
+};
+
+export type ProjectUpdateInput = Partial<Omit<ProjectCreateInput, "client_id">> & {
+  status?: ProjectStatus;
+};
+
+export type TaskCreateInput = {
+  title: string;
+  due_date?: string;
+};
+
+export type TaskUpdateInput = {
+  title?: string;
+  due_date?: string;
+  is_done?: boolean;
+};
+
+export type TaskWithProjectOut = TaskOut & {
+  project_id: string;
+  project_name: string;
+};

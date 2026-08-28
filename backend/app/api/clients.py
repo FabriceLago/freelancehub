@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.models.organization import Membership, Role
 from app.schemas.client import ClientCreate, ClientOut, ClientUpdate
 from app.services import client_service
-from app.services.client_service import ClientNotFoundError
+from app.services.client_service import ClientHasProjectsError, ClientNotFoundError
 
 router = APIRouter(prefix="/clients", tags=["clients"])
 
@@ -62,4 +62,9 @@ def delete_client(
         client_service.delete_client(db, membership.organization_id, client_id)
     except ClientNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client introuvable")
+    except ClientHasProjectsError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ce client a des projets associés — supprimez-les d'abord",
+        )
     return None
