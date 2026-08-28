@@ -32,9 +32,14 @@ saas/
 - PostgreSQL 16 (ou Docker)
 
 ### Variables d'environnement
+Deux fichiers `.env` distincts, selon comment vous lancez le projet :
+- **`docker compose`** lit `.env` à la racine → `cp .env.example .env`
+- **Backend lancé en local (hors Docker)** lit `backend/.env` → `cp backend/.env.example backend/.env`
+
 ```bash
 cp .env.example .env
-# éditer .env avec vos propres valeurs
+cp backend/.env.example backend/.env
+# éditer les deux avec vos propres valeurs
 ```
 
 ### Backend
@@ -43,7 +48,7 @@ cd backend
 python -m venv venv
 source venv/Scripts/activate   # Windows Git Bash — venv\Scripts\activate.bat sous cmd.exe
 pip install -r requirements.txt
-alembic upgrade head            # applique les migrations
+alembic upgrade head            # applique les migrations (nécessite PostgreSQL démarré)
 uvicorn app.main:app --reload   # démarre l'API sur http://localhost:8000
 ```
 
