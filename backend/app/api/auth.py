@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.exceptions import EmailAlreadyRegisteredError, InvalidCredentialsError, InvalidTokenError
+from app.core.rate_limit import limiter
 from app.core.security import create_access_token
 from app.schemas.auth import ForgotPasswordRequest, LoginRequest, RegisterRequest, ResetPasswordRequest, TokenResponse
 from app.services import auth_service
@@ -11,7 +12,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-def register(payload: RegisterRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def register(request: Request, payload: RegisterRequest, db: Session = Depends(get_db)):
     try:
         user = auth_service.register(
             db, payload.email, payload.password, payload.full_name, payload.organization_name
@@ -24,7 +26,8 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)):
     try:
         user = auth_service.authenticate(db, payload.email, payload.password)
     except InvalidCredentialsError:
@@ -45,14 +48,16 @@ def logout():
 
 
 @router.post("/forgot-password", status_code=status.HTTP_204_NO_CONTENT)
-def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def forgot_password(request: Request, payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
     auth_service.request_password_reset(db, payload.email)
     # Toujours 204, que l'email existe ou non : évite l'énumération de comptes.
     return None
 
 
 @router.post("/reset-password", status_code=status.HTTP_204_NO_CONTENT)
-def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def reset_password(request: Request, payload: ResetPasswordRequest, db: Session = Depends(get_db)):
     try:
         auth_service.reset_password(db, payload.token, payload.new_password)
     except InvalidTokenError:

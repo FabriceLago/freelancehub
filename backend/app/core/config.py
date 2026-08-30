@@ -18,10 +18,10 @@ class Settings(BaseSettings):
 
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
-    stripe_price_starter: str = ""
-    stripe_price_pro: str = ""
-    stripe_price_business: str = ""
     frontend_url: str = "http://localhost:3000"
+
+    # Phase 12 — sécurité
+    environment: str = "development"
 
 
 settings = Settings()
