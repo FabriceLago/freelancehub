@@ -1,5 +1,6 @@
 import logging
 
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
@@ -13,6 +14,15 @@ from app.core.rate_limit import limiter
 # Sans ceci, le logger racine reste au niveau WARNING par défaut et les
 # logger.info() applicatifs (ex: le stub d'email) sont silencieusement ignorés.
 logging.basicConfig(level=logging.INFO)
+
+if settings.sentry_dsn:
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.environment,
+        # send_default_pii=False (défaut) : pas d'IP ni d'en-têtes de requête
+        # envoyés à Sentry par défaut — cohérent avec la posture de
+        # confidentialité du projet (voir résidus RGPD, Phase 18).
+    )
 
 _secret_looks_like_placeholder = settings.secret_key.startswith("change-me") or len(settings.secret_key) < 32
 if _secret_looks_like_placeholder and settings.environment != "development":

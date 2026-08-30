@@ -37,5 +37,9 @@ class Settings(BaseSettings):
     # Phase 12 — sécurité
     environment: str = "development"
 
+    # Phase 19 — monitoring. Vide en dev : pas de bruit Sentry pendant le
+    # développement local ni pendant les tests.
+    sentry_dsn: str = ""
+
 
 settings = Settings()
