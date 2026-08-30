@@ -1,0 +1,11 @@
+# Ruleset volontairement restreint : imports inutilisés, redéfinitions,
+# variables locales inutilisées, erreurs de syntaxe. F821 (nom non défini)
+# est EXCLU car il produit de faux positifs sur les relations SQLAlchemy —
+# `Mapped["Organization"]` référence une classe définie dans un autre
+# fichier, résolue à l'exécution par le mapper SQLAlchemy, pas par un import
+# statique (pattern standard pour éviter les imports circulaires entre
+# modèles). Vérifié : 0 finding sur tout le code actuel avec ce ruleset.
+exclude = ["venv", "migrations/versions"]
+
+[lint]
+select = ["F401", "F811", "F841", "E9"]
