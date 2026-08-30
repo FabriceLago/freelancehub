@@ -1,0 +1,4 @@
+# Sans ça, core.autocrlf=true (actif sur cette machine Windows) convertit les
+# fins de ligne en CRLF au checkout — un script shell avec un "\r" dans son
+# shebang ("#!/bin/sh\r") ne démarre pas dans un conteneur Linux.
+*.sh text eol=lf

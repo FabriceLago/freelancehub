@@ -1,3 +1,6 @@
+# Compose de DÉVELOPPEMENT : hot-reload sur backend et frontend via volumes
+# montés. Pour la prod, voir docker-compose.prod.yml (images figées, buildées
+# une fois, aucun volume de code — voir Phase 14).
 services:
   postgres:
     image: postgres:16-alpine
@@ -24,6 +27,13 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-freelancehub}
+      ENVIRONMENT: development
+    # --reload : le code monté en volume ci-dessous redémarre l'API à chaud,
+    # sans reconstruire l'image à chaque changement.
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/migrations:/app/migrations
     ports:
       - "8000:8000"
     depends_on:
@@ -34,9 +44,16 @@ services:
     build:
       context: .
       dockerfile: infrastructure/docker/Dockerfile.frontend
+      target: dev
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      # Volumes anonymes : empêchent le bind mount ci-dessus d'écraser le
+      # node_modules et le cache .next installés/générés DANS l'image.
+      - /app/node_modules
+      - /app/.next
     ports:
       - "3000:3000"
     depends_on:

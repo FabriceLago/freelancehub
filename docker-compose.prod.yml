@@ -1,0 +1,29 @@
+# Override de PRODUCTION : `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build`
+# Retire le hot-reload (aucun volume de code, aucun --reload), construit
+# l'image frontend en mode build (stage "runner", pas "dev"), ferme le port
+# Postgres au host (seul le réseau interne Docker doit pouvoir l'atteindre),
+# et bascule ENVIRONMENT=production (active le garde-fou SECRET_KEY et
+# désactive /docs — voir Phase 12).
+services:
+  postgres:
+    restart: always
+    # !override : par défaut, Compose FUSIONNE les listes entre fichiers
+    # (une simple `ports: []` ici serait ignorée et le port resterait publié
+    # depuis docker-compose.yml — trouvé en inspectant `docker compose config`
+    # avant tout déploiement). !override force le remplacement complet.
+    ports: !override []  # pas d'exposition au host en prod — seuls backend/frontend du réseau interne y accèdent
+
+  backend:
+    restart: always
+    environment:
+      ENVIRONMENT: production
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    volumes: !override []  # aucun bind mount de code : l'image buildée fait foi, pas le disque de l'hôte
+
+  frontend:
+    build:
+      target: runner
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    restart: always
+    volumes: !override []

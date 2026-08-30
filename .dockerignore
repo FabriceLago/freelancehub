@@ -1,0 +1,43 @@
+# Contexte de build Docker : exclut tout ce qui n'est jamais nécessaire à
+# l'intérieur d'une image (secrets, dépendances déjà installées côté hôte,
+# artefacts de build) — sans ça, `docker build` envoie potentiellement des
+# centaines de Mo (node_modules, venv) au démon Docker à chaque build.
+
+# Secrets — ne doivent jamais être copiés dans une image (une image se
+# retrouve facilement dans un registre partagé, contrairement à .env).
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Dépendances déjà réinstallées dans l'image par le Dockerfile
+node_modules
+**/node_modules
+venv
+**/venv
+.venv
+**/.venv
+
+# Artefacts de build / cache
+**/__pycache__
+**/*.pyc
+.pytest_cache
+**/.pytest_cache
+frontend/.next
+frontend/out
+backend/out
+out
+
+# VCS et outillage local
+.git
+.gitignore
+.claude
+.vscode
+.idea
+
+# Rendus vidéo / gros fichiers locaux qui n'ont rien à faire dans une image
+*.mp4
+*.mov
+*.webm

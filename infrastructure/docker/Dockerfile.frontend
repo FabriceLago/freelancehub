@@ -1,12 +1,56 @@
-FROM node:20-slim
-
+# --- Stage 1 : dépendances ---
+FROM node:20-slim AS deps
 WORKDIR /app
-
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 
+# --- Stage dev : serveur de développement avec hot-reload ---
+# Stage à part (pas dérivé de "builder") : le dev n'a jamais besoin d'un
+# build de prod, juste de node_modules + du code monté en volume par
+# docker-compose.yml pour le rechargement à chaud.
+FROM node:20-slim AS dev
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY frontend .
+EXPOSE 3000
+CMD ["npm", "run", "dev"]
 
+# --- Stage 2 : build ---
+FROM node:20-slim AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY frontend .
+# NEXT_PUBLIC_* est injecté au BUILD (compilé dans le bundle JS), pas au
+# runtime — doit donc être un build-arg, pas juste une env du conteneur final.
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+RUN npm run build
+
+# --- Stage 3 : exécution ---
+# output: "standalone" (next.config.ts) ne copie que server.js + les deps
+# effectivement utilisées — image finale bien plus légère qu'un `npm start`
+# classique qui a besoin de tout node_modules.
+FROM node:20-slim AS runner
+WORKDIR /app
+
+# node:20-slim fournit déjà un utilisateur "node" (UID 1000) — en créer un
+# autre à ce même UID échoue ("UID 1000 is not unique", trouvé en testant).
+ENV NODE_ENV=production
+# Docker fixe automatiquement HOSTNAME au nom du conteneur, et server.js
+# (sortie standalone de Next) écoute sur process.env.HOSTNAME au lieu de
+# 0.0.0.0 si elle est définie — le serveur ne répondait alors plus du tout
+# sur localhost/127.0.0.1 à l'intérieur du conteneur (trouvé via le
+# HEALTHCHECK qui échouait alors que le trafic externe, lui, passait).
+ENV HOSTNAME=0.0.0.0
+
+COPY --from=builder --chown=node:node /app/public ./public
+COPY --from=builder --chown=node:node /app/.next/standalone ./
+COPY --from=builder --chown=node:node /app/.next/static ./.next/static
+
+USER node
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
+    CMD node -e "fetch('http://localhost:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
+CMD ["node", "server.js"]
