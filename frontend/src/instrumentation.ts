@@ -1,0 +1,16 @@
+// Sentry côté serveur/edge (Phase 19) — capture les erreurs des Server
+// Components, Route Handlers, et du rendu SSR que le SDK client ne voit
+// jamais (il ne tourne que dans le navigateur).
+import * as Sentry from "@sentry/nextjs";
+
+export async function register() {
+  if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return;
+
+  if (process.env.NEXT_RUNTIME === "nodejs" || process.env.NEXT_RUNTIME === "edge") {
+    Sentry.init({
+      dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    });
+  }
+}
+
+export const onRequestError = Sentry.captureRequestError;
