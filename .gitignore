@@ -21,3 +21,10 @@ frontend/coverage/
 Thumbs.db
 .vscode/
 .idea/
+
+# --- Divers ---
+*.log
+*.pem
+*.key
+*.p12
+.env.test
