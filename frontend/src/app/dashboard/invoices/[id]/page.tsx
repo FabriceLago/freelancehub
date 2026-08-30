@@ -7,8 +7,9 @@ import { ApiError, api } from "@/lib/api";
 import { getStoredToken } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import { formatCents } from "@/lib/money";
-import type { ClientOut, InvoiceDetailOut, OrganizationOut } from "@/lib/types";
+import type { ClientOut, InvoiceDetailOut, OrganizationOut, ReminderDraftResponse } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Brouillon",
@@ -28,6 +29,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const [client, setClient] = useState<ClientOut | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [reminderDraft, setReminderDraft] = useState<ReminderDraftResponse | null>(null);
+  const [reminderLoading, setReminderLoading] = useState(false);
 
   const canDelete = org?.role === "owner" || org?.role === "admin";
 
@@ -89,6 +92,26 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
       notify("Impossible de marquer la facture payée", "error");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleGenerateReminder() {
+    const token = getStoredToken();
+    if (!token || !invoice) return;
+    setReminderLoading(true);
+    try {
+      const draft = await api.generateReminderDraft(token, invoice.id);
+      setReminderDraft(draft);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 402) {
+        notify("Quota IA atteint pour votre plan ce mois-ci", "error");
+      } else if (err instanceof ApiError && err.status === 503) {
+        notify("Assistant IA non configuré", "error");
+      } else {
+        notify("Impossible de générer la relance", "error");
+      }
+    } finally {
+      setReminderLoading(false);
     }
   }
 
@@ -197,6 +220,11 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
             Annuler
           </Button>
         )}
+        {(invoice.status === "sent" || invoice.status === "overdue") && (
+          <Button variant="secondary" onClick={handleGenerateReminder} loading={reminderLoading}>
+            Générer une relance (IA)
+          </Button>
+        )}
         {invoice.status === "draft" && canDelete && (
           <button
             onClick={handleDelete}
@@ -207,6 +235,28 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           </button>
         )}
       </div>
+
+      {reminderDraft && (
+        <Modal title="Relance générée par l'IA" onClose={() => setReminderDraft(null)}>
+          <div className="flex flex-col gap-3">
+            <div>
+              <div className="mb-1 text-xs font-medium text-[var(--color-text-dim)]">Objet</div>
+              <div className="rounded-md border border-[var(--color-line)] bg-[var(--color-surface-2)] px-3 py-2 text-sm">
+                {reminderDraft.subject}
+              </div>
+            </div>
+            <div>
+              <div className="mb-1 text-xs font-medium text-[var(--color-text-dim)]">Message</div>
+              <div className="whitespace-pre-wrap rounded-md border border-[var(--color-line)] bg-[var(--color-surface-2)] px-3 py-2 text-sm">
+                {reminderDraft.body}
+              </div>
+            </div>
+            <p className="text-xs text-[var(--color-text-dim)]">
+              Relisez avant d&apos;envoyer — copiez ce texte dans votre client email habituel.
+            </p>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

@@ -234,3 +234,19 @@ export type InvoiceUpdateInput = {
   due_date?: string;
   line_items?: LineItemInput[];
 };
+
+export type QuoteDraftLineItem = {
+  description: string;
+  quantity: number;
+  unit_price_cents: number;
+};
+
+export type QuoteDraftResponse = {
+  line_items: QuoteDraftLineItem[];
+  suggested_tax_rate: number;
+};
+
+export type ReminderDraftResponse = {
+  subject: string;
+  body: string;
+};

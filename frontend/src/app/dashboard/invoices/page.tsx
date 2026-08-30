@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { getStoredToken } from "@/lib/auth-context";
 import { useToast } from "@/lib/toast-context";
 import { formatCents } from "@/lib/money";
@@ -234,6 +234,41 @@ function NewQuoteModal({
   const [taxRate, setTaxRate] = useState("0");
   const [lineItems, setLineItems] = useState<LineItemInput[]>([]);
   const [loading, setLoading] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [draftSeed, setDraftSeed] = useState<{ key: number; items: LineItemInput[] } | null>(null);
+
+  async function handleGenerateDraft() {
+    if (!aiPrompt.trim()) {
+      notify("Décrivez brièvement le projet", "error");
+      return;
+    }
+    const token = getStoredToken();
+    if (!token) return;
+    setAiLoading(true);
+    try {
+      const draft = await api.generateQuoteDraft(token, clientId, aiPrompt);
+      const items: LineItemInput[] = draft.line_items.map((li) => ({
+        description: li.description,
+        quantity: String(li.quantity),
+        unit_price_cents: li.unit_price_cents,
+      }));
+      setDraftSeed((prev) => ({ key: (prev?.key ?? 0) + 1, items }));
+      setLineItems(items);
+      setTaxRate(String(draft.suggested_tax_rate));
+      notify("Brouillon généré — relisez avant de créer le devis.", "success");
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 402) {
+        notify("Quota IA atteint pour votre plan ce mois-ci", "error");
+      } else if (err instanceof ApiError && err.status === 503) {
+        notify("Assistant IA non configuré", "error");
+      } else {
+        notify("Impossible de générer le brouillon", "error");
+      }
+    } finally {
+      setAiLoading(false);
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -276,7 +311,31 @@ function NewQuoteModal({
           </select>
         </div>
 
-        <LineItemsEditor taxRate={taxRate} onTaxRateChange={setTaxRate} onChange={setLineItems} />
+        <div className="rounded-md border border-dashed border-[var(--color-line)] p-3">
+          <label htmlFor="ai_prompt" className="mb-1.5 block text-xs font-medium text-[var(--color-text-dim)]">
+            Assistant IA — décrivez le projet en une phrase
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="ai_prompt"
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              placeholder="ex : Site vitrine 5 pages pour un restaurant"
+              className="flex-1 rounded-md border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
+            />
+            <Button type="button" variant="secondary" onClick={handleGenerateDraft} loading={aiLoading}>
+              Générer
+            </Button>
+          </div>
+        </div>
+
+        <LineItemsEditor
+          key={draftSeed?.key ?? 0}
+          initialItems={draftSeed?.items}
+          taxRate={taxRate}
+          onTaxRateChange={setTaxRate}
+          onChange={setLineItems}
+        />
 
         <div className="mt-2 flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>

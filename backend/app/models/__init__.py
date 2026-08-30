@@ -2,6 +2,7 @@
 requis par `alembic revision --autogenerate` (migrations/env.py fait
 `from app.models import *`)."""
 
+from app.models.ai import AiGeneration
 from app.models.audit import AuditLog
 from app.models.auth_token import TokenPurpose, VerificationToken
 from app.models.billing import Plan, Subscription
@@ -13,6 +14,7 @@ from app.models.quote import Quote, QuoteLineItem
 from app.models.user import User
 
 __all__ = [
+    "AiGeneration",
     "AuditLog",
     "TokenPurpose",
     "VerificationToken",

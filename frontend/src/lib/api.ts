@@ -20,10 +20,12 @@ import type {
   ProspectUpdateInput,
   QuoteCreateInput,
   QuoteDetailOut,
+  QuoteDraftResponse,
   QuoteOut,
   QuoteStatus,
   QuoteUpdateInput,
   RegisterInput,
+  ReminderDraftResponse,
   TaskCreateInput,
   TaskOut,
   TaskUpdateInput,
@@ -188,4 +190,14 @@ export const api = {
     request<InvoiceOut>(`/invoices/${id}/mark-paid`, { method: "POST" }, token),
 
   deleteInvoice: (token: string, id: string) => request<void>(`/invoices/${id}`, { method: "DELETE" }, token),
+
+  generateQuoteDraft: (token: string, clientId: string, prompt: string) =>
+    request<QuoteDraftResponse>(
+      "/ai/quote-draft",
+      { method: "POST", body: JSON.stringify({ client_id: clientId, prompt }) },
+      token,
+    ),
+
+  generateReminderDraft: (token: string, invoiceId: string) =>
+    request<ReminderDraftResponse>(`/ai/invoices/${invoiceId}/reminder-draft`, { method: "POST" }, token),
 };
