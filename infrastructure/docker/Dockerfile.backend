@@ -41,7 +41,13 @@ ENV PATH=/home/appuser/.local/bin:$PATH \
 EXPOSE 8000
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Forme shell (pas exec) : nécessaire pour l'expansion de ${PORT} — Railway
+# (et la plupart des PaaS) assigne un port dynamique via cette variable et
+# route le trafic public dessus ; docker-compose.yml/.prod.yml, eux,
+# écrasent toujours CMD explicitement (port 8000 fixe), donc cette forme
+# shell ne les affecte jamais. Trouvé en déployant réellement sur Railway :
+# le port codé en dur (8000) faisait échouer le healthcheck de la plateforme.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
