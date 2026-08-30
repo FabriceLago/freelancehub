@@ -15,4 +15,5 @@ def read_current_organization(membership: Membership = Depends(get_current_membe
         currency=membership.organization.currency,
         role=membership.role,
         plan=membership.organization.subscription.plan.code,
+        subscription_status=membership.organization.subscription.status,
     )

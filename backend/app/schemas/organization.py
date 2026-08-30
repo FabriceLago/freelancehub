@@ -2,7 +2,7 @@ import uuid
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.billing import PlanCode
+from app.models.billing import PlanCode, SubscriptionStatus
 from app.models.organization import Role
 
 
@@ -14,3 +14,4 @@ class OrganizationOut(BaseModel):
     currency: str
     role: Role
     plan: PlanCode
+    subscription_status: SubscriptionStatus

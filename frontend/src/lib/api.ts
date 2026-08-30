@@ -9,6 +9,8 @@ import type {
   InvoiceUpdateInput,
   LoginInput,
   OrganizationOut,
+  PlanCode,
+  PlanOut,
   ProjectCreateInput,
   ProjectDetailOut,
   ProjectOut,
@@ -26,6 +28,7 @@ import type {
   QuoteUpdateInput,
   RegisterInput,
   ReminderDraftResponse,
+  SessionUrlResponse,
   TaskCreateInput,
   TaskOut,
   TaskUpdateInput,
@@ -200,4 +203,16 @@ export const api = {
 
   generateReminderDraft: (token: string, invoiceId: string) =>
     request<ReminderDraftResponse>(`/ai/invoices/${invoiceId}/reminder-draft`, { method: "POST" }, token),
+
+  listBillingPlans: (token: string) => request<PlanOut[]>("/billing/plans", {}, token),
+
+  createCheckoutSession: (token: string, planCode: PlanCode) =>
+    request<SessionUrlResponse>(
+      "/billing/checkout-session",
+      { method: "POST", body: JSON.stringify({ plan_code: planCode }) },
+      token,
+    ),
+
+  createPortalSession: (token: string) =>
+    request<SessionUrlResponse>("/billing/portal-session", { method: "POST" }, token),
 };

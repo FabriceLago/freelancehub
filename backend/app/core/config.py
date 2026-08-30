@@ -16,5 +16,12 @@ class Settings(BaseSettings):
     ai_model: str = "claude-opus-5"
     ai_timeout_seconds: float = 30.0
 
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_price_starter: str = ""
+    stripe_price_pro: str = ""
+    stripe_price_business: str = ""
+    frontend_url: str = "http://localhost:3000"
+
 
 settings = Settings()

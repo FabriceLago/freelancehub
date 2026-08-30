@@ -12,6 +12,7 @@ export type UserOut = {
 
 export type Role = "owner" | "admin" | "member";
 export type PlanCode = "free" | "starter" | "pro" | "business";
+export type SubscriptionStatus = "trialing" | "active" | "past_due" | "canceled" | "incomplete";
 
 export type OrganizationOut = {
   id: string;
@@ -19,6 +20,7 @@ export type OrganizationOut = {
   currency: string;
   role: Role;
   plan: PlanCode;
+  subscription_status: SubscriptionStatus;
 };
 
 export type RegisterInput = {
@@ -249,4 +251,18 @@ export type QuoteDraftResponse = {
 export type ReminderDraftResponse = {
   subject: string;
   body: string;
+};
+
+export type PlanOut = {
+  id: string;
+  code: PlanCode;
+  name: string;
+  price_cents: number;
+  max_prospects: number | null;
+  max_documents_per_month: number | null;
+  ai_generations_per_month: number | null;
+};
+
+export type SessionUrlResponse = {
+  url: string;
 };
