@@ -1,0 +1,5 @@
+# Dépendances de test uniquement — jamais installées en production
+# (voir requirements.txt pour les dépendances runtime).
+-r requirements.txt
+pytest>=8.3
+httpx>=0.27
