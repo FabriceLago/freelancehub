@@ -5,9 +5,18 @@ from sqlalchemy.orm import Session
 
 from app.models.crm import Client
 
+# Voir prospect_repository._MAX_RESULTS — même filet de sécurité en attendant
+# une vraie pagination.
+_MAX_RESULTS = 200
+
 
 def list_for_organization(db: Session, organization_id: uuid.UUID) -> list[Client]:
-    stmt = select(Client).where(Client.organization_id == organization_id).order_by(Client.created_at.desc())
+    stmt = (
+        select(Client)
+        .where(Client.organization_id == organization_id)
+        .order_by(Client.created_at.desc())
+        .limit(_MAX_RESULTS)
+    )
     return list(db.execute(stmt).scalars().all())
 
 

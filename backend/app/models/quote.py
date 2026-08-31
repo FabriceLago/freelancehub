@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -20,11 +20,12 @@ class QuoteStatus(str, enum.Enum):
 class Quote(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "quotes"
     # Numérotation lisible (ex: "DEV-2026-014") unique par organisation, pas globalement.
-    __table_args__ = (UniqueConstraint("organization_id", "number", name="uq_quote_number_per_org"),)
-
-    organization_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("organizations.id", ondelete="CASCADE"), index=True
+    __table_args__ = (
+        UniqueConstraint("organization_id", "number", name="uq_quote_number_per_org"),
+        Index("ix_quotes_org_created", "organization_id", "created_at"),
     )
+
+    organization_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"))
     client_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("clients.id", ondelete="RESTRICT"), index=True)
     project_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("projects.id", ondelete="SET NULL"), nullable=True)
 

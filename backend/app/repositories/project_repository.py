@@ -5,6 +5,10 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.project import Project, ProjectStatus, Task
 
+# Voir prospect_repository._MAX_RESULTS — même filet de sécurité en attendant
+# une vraie pagination.
+_MAX_RESULTS = 200
+
 
 def list_for_organization(
     db: Session, organization_id: uuid.UUID, status: ProjectStatus | None = None
@@ -12,7 +16,7 @@ def list_for_organization(
     stmt = select(Project).where(Project.organization_id == organization_id)
     if status is not None:
         stmt = stmt.where(Project.status == status)
-    stmt = stmt.order_by(Project.created_at.desc())
+    stmt = stmt.order_by(Project.created_at.desc()).limit(_MAX_RESULTS)
     return list(db.execute(stmt).scalars().all())
 
 

@@ -5,6 +5,10 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.invoice import Invoice, InvoiceStatus
 
+# Voir prospect_repository._MAX_RESULTS — même filet de sécurité en attendant
+# une vraie pagination.
+_MAX_RESULTS = 200
+
 
 def list_for_organization(
     db: Session, organization_id: uuid.UUID, status: InvoiceStatus | None = None
@@ -16,7 +20,7 @@ def list_for_organization(
     )
     if status is not None:
         stmt = stmt.where(Invoice.status == status)
-    stmt = stmt.order_by(Invoice.created_at.desc())
+    stmt = stmt.order_by(Invoice.created_at.desc()).limit(_MAX_RESULTS)
     return list(db.execute(stmt).scalars().all())
 
 

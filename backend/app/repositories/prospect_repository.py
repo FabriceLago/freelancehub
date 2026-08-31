@@ -5,6 +5,12 @@ from sqlalchemy.orm import Session
 
 from app.models.crm import Prospect, ProspectStatus
 
+# Filet de sécurité tant qu'il n'y a pas de pagination côté frontend (Phase 20) :
+# sans lui, une organisation avec des dizaines de milliers de prospects
+# renverrait tout d'un coup. 200 couvre largement un usage normal en attendant
+# une vraie pagination (offset/curseur + "charger plus" côté UI).
+_MAX_RESULTS = 200
+
 
 def list_for_organization(
     db: Session, organization_id: uuid.UUID, status: ProspectStatus | None = None
@@ -12,7 +18,7 @@ def list_for_organization(
     stmt = select(Prospect).where(Prospect.organization_id == organization_id)
     if status is not None:
         stmt = stmt.where(Prospect.status == status)
-    stmt = stmt.order_by(Prospect.created_at.desc())
+    stmt = stmt.order_by(Prospect.created_at.desc()).limit(_MAX_RESULTS)
     return list(db.execute(stmt).scalars().all())
 
 

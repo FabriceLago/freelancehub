@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import date
 
-from sqlalchemy import Boolean, Date, ForeignKey, String, Text
+from sqlalchemy import Boolean, Date, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -17,10 +17,9 @@ class ProjectStatus(str, enum.Enum):
 
 class Project(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "projects"
+    __table_args__ = (Index("ix_projects_org_created", "organization_id", "created_at"),)
 
-    organization_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("organizations.id", ondelete="CASCADE"), index=True
-    )
+    organization_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"))
     # RESTRICT : on ne supprime pas un client tant qu'il a des projets (donc
     # potentiellement des devis/factures) rattachés — évite la perte silencieuse
     # de documents financiers.
