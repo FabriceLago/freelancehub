@@ -41,5 +41,10 @@ class Settings(BaseSettings):
     # développement local ni pendant les tests.
     sentry_dsn: str = ""
 
+    # Phase 21 — email transactionnel (Resend). Vide en dev : les emails
+    # restent logués au lieu d'être réellement envoyés (voir email_service.py).
+    resend_api_key: str = ""
+    email_from: str = "FreelanceHub <onboarding@resend.dev>"
+
 
 settings = Settings()
